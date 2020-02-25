@@ -7,6 +7,10 @@ import random
 import socket
 
 def client():
+    file = open("PROJI-DNSRS.txt", 'r'
+    myURLlist = []
+    for line in file:
+        myURLlist.append(line.strip())
     try:
         rs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Root DNS socket created")
