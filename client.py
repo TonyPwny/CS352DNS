@@ -7,7 +7,7 @@ import random
 import socket
 
 def client():
-    file = open("PROJI-DNSRS.txt", 'r'
+    file = open("PROJI-HNS.txt", 'r'
     myURLlist = []
     for line in file:
         myURLlist.append(line.strip())
