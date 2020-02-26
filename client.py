@@ -7,11 +7,12 @@ import random
 import socket
 
 def client():
-    #This populates a list with the addresses in the PROJI-HNS.txt
-    file = open("PROJI-HNS.txt", 'r')
+    #This populates hostNameList with the addresses in the PROJI-HNS.txt
 
-
-
+    hostNameFile = open("PROJI-HNS.txt", 'r')
+    hostNameList = []
+    for line in hostNameFile:
+        hostNameList.append(line.strip())
 
     try:
         RootSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

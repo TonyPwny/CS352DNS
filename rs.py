@@ -7,7 +7,16 @@ import random
 import socket
 
 def server():
-    file = open("PROJI-DNSRS.txt", 'r')
+
+# This reads the PROJI - DNSRS.txt file
+    rootDNSFile = open("PROJI-DNSRS.txt", 'r')
+# Create an empty Dictionary
+    rootDNSDict = {}
+# for each line in rootDNSFile, split that line and have that line take the shape
+# of (key, ip, flag), The key holds the value of the ip and the flag.
+    for line in rootDNSFile:
+        (key, ip, flag) = line.split()
+        rootDNSDict[key] = ip, flag
 
 
 
