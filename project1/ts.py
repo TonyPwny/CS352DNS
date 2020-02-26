@@ -14,7 +14,7 @@ def server():
     try:
     
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("TS server socket created...")
+        print("TS server socket created: port " + str(port) + "\n")
     except socket.error as socketError:
     
         print('TS socket already open, error: {}\n'.format(socketError))

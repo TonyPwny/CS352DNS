@@ -15,9 +15,10 @@ def client():
     # Create file object to write all outputs
     fileOutput = open("out-proj0.txt", "a")
     
+    # Establish RS socket
     try:
         clientRSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientRSSocketCreated = "Client socket created to connect to RS server...\n"
+        clientRSSocketCreated = "Client socket created to connect to RS server: port " + str(RSPort) + "\n"
         print(clientRSSocketCreated)
         fileOutput.write(clientRSSocketCreated)
     except socket.error as socketError:
@@ -25,10 +26,11 @@ def client():
         print(socketOpenError)
         fileOutput.write(socketOpenError)
         exit()
-        
+    
+    # Establish TS socket
     try:
         clientTSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientTSSocketCreated = "Client socket created to connect to TS server...\n"
+        clientTSSocketCreated = "Client socket created to connect to TS server: port " + str(TSPort) + "\n"
         print(clientTSSocketCreated)
         fileOutput.write(clientTSSocketCreated)
     except socket.error as socketError:
@@ -46,29 +48,32 @@ def client():
     
     # Receive greeting from the server
     dataFromServer = clientRSSocket.recv(100)
-    greetingReceived = "Greeting received from the server: {}\n".format(dataFromServer.decode('utf-8'))
+    greetingReceived = "Greeting received from the RS server: {}\n".format(dataFromServer.decode('utf-8'))
     print(greetingReceived)
     fileOutput.write(greetingReceived)
     
     # Send a message to the server
-    message = "Hello! Can you slice?"
-    messageSentPrompt = "Sending \"" + message + "\" to server...\n"
+    message = "Hello RS server! Can you slice?"
+    messageSentPrompt = "Sending \"" + message + "\" to RS server...\n"
     print(messageSentPrompt)
     fileOutput.write(messageSentPrompt)
     clientRSSocket.send(message.encode('utf-8'))
-    
-    # Receive response from the server
-    dataFromServer = clientRSSocket.recv(100)
-    responsePrompt = "Response received from the server: {}\n".format(dataFromServer.decode('utf-8'))
-    print(responsePrompt)
-    fileOutput.write(responsePrompt)
     
     # Open a local file, read it and append to file output
     fileRead = open("in-proj0.txt", "r")
     
     for line in fileRead:
-        print(line)
-        fileOutput.write(line)
+        message = line
+        messageSentPrompt = "Sending \"" + line + "\" to RS server...\n"
+        print(messageSentPrompt)
+        fileOutput.write(messageSentPrompt)
+        clientRSSocket.send(message.encode('utf-8'))
+    
+    # Receive response from the server
+    dataFromServer = clientRSSocket.recv(1000)
+    responsePrompt = "Response received from the RS server: {}\n".format(dataFromServer.decode('utf-8'))
+    print(responsePrompt)
+    fileOutput.write(responsePrompt)
     
     # Close the client socket
     clientRSSocket.close()
