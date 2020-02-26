@@ -16,28 +16,25 @@ def client():
     try:
         RootSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Root DNS socket created")
-        RootServerPort = #user input#
+        rootServerPort = #user input#
         # Define the port on which you want to connect to the server
         rootdns_addr = socket.gethostbyname(socket.gethostname())
-        server_binding = (rootdns_addr, rsport)
-        RootSocket.connect(server_binding)
+        rootDNS_binding = (rootdns_addr, rootServerPort)
+        rootSocket.connect(rootDNS_binding)
+
 
         except socket.error as err:
         print('socket open error: {} \n'.format(err))
         exit()
 
-
-
-#I was thinking of having 2 tries? Both transmitting strings across sockets to said dns server
     try:
         TopLevelSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Top Level DNS socket created")
         # Define the port on which you want to connect to the server
         TopLevelport = #user input- rs listening port#
-        toplevel_addr = socket.gethostbyname(socket.gethostname())
-        server_binding = (toplevel_addr, tsport)
-        TopLevelSocket.connect(server_binding)
-
+        topLevel_addr = socket.gethostbyname(socket.gethostname())
+        topLevelServer_binding = (toplevel_addr, TopLevelport)
+        TopLevelSocket.connect(topLevelserver_binding)
 
 
         except socket.error as err:
@@ -46,10 +43,10 @@ def client():
 
 
 
-    # Receive data from the server
-    data_from_server=cs.recv(100)
-    print("[C]: Data received from server: {}".format(data_from_server.decode('utf-8')))
+    ## Receive data from the server
+    #data_from_server=cs.recv(100)
+    #print("[C]: Data received from server: {}".format(data_from_server.decode('utf-8')))
 
     # close the client socket
-    cs.close()
-    exit()
+#    cs.close()
+#    exit()
