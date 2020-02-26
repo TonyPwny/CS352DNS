@@ -7,13 +7,12 @@ import random
 import socket
 
 def server():
-    file = open("PROJI-DNSRS.txt", 'r'
-    myDNSlist = []
-    for line in file:
-        myDNSlist.append(line.strip())
+    file = open("PROJI-DNSRS.txt", 'r')
+
+
 
     try:
-        rs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        RootSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[S]: Root DNS socket created")
     except socket.error as err:
         print('socket open error: {}\n'.format(err))
@@ -36,7 +35,7 @@ def server():
 
     # FOR Loop here where we compare the addresses given in the file
     # to the addresses in Proj-I DNSRS.txt
-    
+
     msg = "Welcome to CS 352!"
     csockid.send(msg.encode('utf-8'))
 

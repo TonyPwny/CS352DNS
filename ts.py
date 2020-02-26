@@ -7,10 +7,11 @@ import random
 import socket
 
 def server():
-    file = open("PROJI-DNSTS.txt", 'r'
-    myTSlist = []
-    for line in file:
-        myTSlist.append(line.strip())
+    file = open("PROJI-DNSTS.txt", 'r')
+
+
+
+
 
     try:
         rs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
