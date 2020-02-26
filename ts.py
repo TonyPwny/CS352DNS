@@ -5,11 +5,20 @@ import threading
 import time
 import random
 import socket
+import sys
 
 def server():
-    file = open("PROJI-DNSTS.txt", 'r')
 
-
+    port = int(sys.argv[1])
+    # This reads the PROJI - DNSTS.txt file
+    TSFiles = open("PROJI-DNSTS.txt", 'r')
+    # Create an empty Dictionary
+    topLevelDict = {}
+    # for each line in rootDNSFile, split that line and have that line take the shape
+    # of (key, ip, flag), The key holds the value of the ip and the flag.
+    for line in TSFiles:
+        (key, ip, flag) = line.split()
+        topLevelDict[key] = ip, flag
 
 
 
@@ -20,9 +29,9 @@ def server():
         print('socket open error: {}\n'.format(err))
         exit()
 
-    topLevelServer_binding = ('', 50007)
-    topLevelServer.bind(topLevelServer_binding)
-    topLevelServer.listen(1)
+    topLevelServer_binding = ('', port)
+    topLevelSocket.bind(topLevelServer_binding)
+    topLevelSocket.listen(1)
     host = socket.gethostname()
     print("[TS]: Server host name is {}".format(host))
     localhost_ip = (socket.gethostbyname(host))
@@ -30,9 +39,17 @@ def server():
     csockid, addr = topLevelSocket.accept()
     print ("[TS]: Got a connection request from a client at {}".format(addr))
 
-    # send a intro message to the client.
-    
 
-    # Close the server socket
     topLevelSocket.close()
     exit()
+
+if __name__ == "__main__":
+        t1 = threading.Thread(name='server', target=server)
+        t1.start()
+
+        time.sleep(random.random() * 5)
+
+        print("Done.")
+
+
+    # Close the server socket

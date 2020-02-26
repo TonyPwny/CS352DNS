@@ -5,10 +5,13 @@ import threading
 import time
 import random
 import socket
+import sys
 
 def client():
-    #This populates hostNameList with the addresses in the PROJI-HNS.txt
 
+    RSport = int(sys.argv[1])
+    TSport = int(sys.argv[2])
+    #This populates hostNameList with the addresses in the PROJI-HNS.txt
     hostNameFile = open("PROJI-HNS.txt", 'r')
     hostNameList = []
     for line in hostNameFile:
@@ -17,14 +20,8 @@ def client():
     try:
         RootSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Root DNS socket created")
-        rootServerPort = #user input#
         # Define the port on which you want to connect to the server
-        rootdns_addr = socket.gethostbyname(socket.gethostname())
-        rootDNS_binding = (rootdns_addr, rootServerPort)
-        rootSocket.connect(rootDNS_binding)
-
-
-        except socket.error as err:
+    except socket.error as err:
         print('socket open error: {} \n'.format(err))
         exit()
 
@@ -32,22 +29,39 @@ def client():
         TopLevelSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Top Level DNS socket created")
         # Define the port on which you want to connect to the server
-        TopLevelport = #user input- rs listening port#
-        topLevel_addr = socket.gethostbyname(socket.gethostname())
-        topLevelServer_binding = (toplevel_addr, TopLevelport)
-        TopLevelSocket.connect(topLevelserver_binding)
-
-
-        except socket.error as err:
+    except socket.error as err:
         print('socket open error: {} \n'.format(err))
         exit()
 
+    #define the port on which you want to connect to the DNS server
+    localhostAddress = socket.gethostbyname(socket.gethostname())
+    rootDNS_binding = (localhostAddress, RSport)
+    RootSocket.connect(rootDNS_binding)
+
+    #Receive data from the server
+    dataFromDNS = RootSocket.recv(100)
+    print("[C]: Data received from server: {}".format(dataFromDNS.decode('utf-8')))
 
 
-    ## Receive data from the server
-    #data_from_server=cs.recv(100)
-    #print("[C]: Data received from server: {}".format(data_from_server.decode('utf-8')))
+    #define the port for the top level server and connect
+    TopLevel_binding = (localhostAddress, TSport)
+    TopLevelSocket.connect(TopLevel_binding)
 
-    # close the client socket
-#    cs.close()
-#    exit()
+    #Receive data from the server
+    dataFromTS = TopLevelSocket.recv(100)
+    print("[C]: Data received from server: {}".format(dataFromTS.decode('utf-8')))
+
+     #close the client socket
+    RootSocket.close()
+    TopLevelSocket.close()
+    exit()
+
+if __name__ == "__main__":
+
+    t2 = threading.Thread(name='client', target=client)
+    t2.start()
+
+    time.sleep(5)
+
+
+    print("Done.")
