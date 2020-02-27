@@ -53,6 +53,7 @@ def server():
         # Receive hostname query from the client
         queryFromClient = clientSocketID.recv(64)
     
+        # The client is done querying
         if queryFromClient == "EndOfQuery":
         
             break

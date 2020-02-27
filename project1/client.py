@@ -50,7 +50,7 @@ def client():
     RSIPAddress = socket.gethostbyname(RSHostname)
     print("Hostname on which to connect to RS server: " + RSHostname + "\n" + "IP address: " + str(RSIPAddress) + "\n")
     
-    # Connect to the RS server on local machine
+    # Connect to the RS server
     RSServerBinding = (RSIPAddress, RSPort)
     clientRSSocket.connect(RSServerBinding)
     
@@ -96,12 +96,12 @@ def client():
         
         results.write(responseFromServer + "\n")
 
-    # Tell the server's your'e done
+    # Tell the servers you're done
     clientRSSocket.send("EndOfQuery".encode('utf-8'))
     clientTSSocket.send("EndOfQuery".encode('utf-8'))
     
     
-    # Close the client socket
+    # Close the client sockets and files
     clientRSSocket.close()
     clientTSSocket.close()
     hostnameQueryFile.close()
