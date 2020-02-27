@@ -1,4 +1,4 @@
-# Anthony Tiongson
+# Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
 # Client side DNS
 # resources:
 #   https://www.pythonforbeginners.com/files/reading-and-writing-files-in-python
@@ -62,7 +62,7 @@ def client():
     # Query for TS server hostname
     TSQueryPrompt = "Querying for TS server hostname...\n"
     print(TSQueryPrompt)
-    clientRSSocket.send("whatIsTheTSHostname".encode('utf-8'))
+    clientRSSocket.send("whatIsTheTSHostname.TSServer".encode('utf-8'))
     TSQueryResponse = clientRSSocket.recv(64)
     TSHostname = TSQueryResponse.split()[0]
     TSIPAddress = (socket.gethostbyname(TSHostname))
@@ -80,7 +80,7 @@ def client():
         hostnameSentPrompt = "Sending \"" + hostname + "\" to RS server...\n"
         print(hostnameSentPrompt)
         clientRSSocket.send(hostname.encode('utf-8'))
-        responseFromServer = clientRSSocket.recv(64)
+        responseFromServer = clientRSSocket.recv(256)
         responsePrompt = "Response received from the RS server: {}\n".format(responseFromServer.decode('utf-8'))
         print(responsePrompt)
         
@@ -89,7 +89,7 @@ def client():
             hostnameRedirectPrompt = "Redirecting \"" + hostname + "\" to TS server: " + TSHostname + "\n" + "IP Address: " + TSIPAddress + "\n"
             print(hostnameRedirectPrompt)
             clientTSSocket.send(hostname.encode('utf-8'))
-            responseFromServer = clientTSSocket.recv(64)
+            responseFromServer = clientTSSocket.recv(256)
             responsePrompt = "Response received from the TS server: {}\n".format(responseFromServer.decode('utf-8'))
             print(responsePrompt)
             

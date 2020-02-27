@@ -1,6 +1,5 @@
-# Anthony Tiongson
+# Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
 # RS (a simplified root DNS server)
-# Try to use a dictionary to store data in PROJI-DNSRS.txt
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv
 
@@ -53,7 +52,7 @@ def server():
     while True:
     
         # Receive hostname query from the client
-        queryFromClient = clientSocketID.recv(64)
+        queryFromClient = clientSocketID.recv(256)
     
         # The client is done querying
         if queryFromClient == "EndOfQuery":
