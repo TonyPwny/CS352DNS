@@ -63,7 +63,7 @@ def server():
         # Hostname not in dictionary, send error message
         else:
         
-            clientSocketID.send("Hostname - Error:HOST NOT FOUND\n".encode('utf-8'))
+            clientSocketID.send(queryFromClient + " - Error:HOST NOT FOUND".encode('utf-8'))
     
     # Close the server socket
     serverSocket.close()

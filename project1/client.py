@@ -94,7 +94,7 @@ def client():
             print(responsePrompt)
             
         
-        results.write(responseFromServer)
+        results.write(responseFromServer + "\n")
 
     # Tell the server's your'e done
     clientRSSocket.send("EndOfQuery".encode('utf-8'))

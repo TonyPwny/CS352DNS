@@ -65,7 +65,6 @@ def server():
         # Hostname not in dictionary, send TS server information
         else:
             
-            print(TSHostname)
             clientSocketID.send(TSHostname.encode('utf-8'))
     
     # Close the server socket
