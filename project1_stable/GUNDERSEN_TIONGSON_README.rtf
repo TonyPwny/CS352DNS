@@ -8,7 +8,11 @@
 \f0\fs24 \cf0 Nicolas Gundersen (neg62)\
 Anthony Tiongson (ast119)\
 \
-The recursive client functionality was implemented using the base project 0 as a starting point.  Both sockets being used are TCP just like in project 0.  The client connects to a user specified RS server hostname that has its IP resolved via socket methods, so it is implied that the RS server is on the same local network as the client (but not necessarily on the same machine).  The client queries the RS server with a hostname meant to trigger the NS response and stores the TS server\'92s hostname information.  This is dramatically different from a real DNS.  The client reads from a list of hostnames line by line and queries each line to the RS server and then waits for a response.  On the RS/TS end, this data is evaluated against a constructed dictionary made from their respective list sof hostnames, ip address, and flags.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 CS 352 Project 1\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+The recursive client functionality was implemented using the base project 0 as a starting point.  Both sockets being used are TCP just like in project 0.  The client connects to a user specified RS server hostname that has its IP resolved via socket methods, so it is implied that the RS server is on the same local network as the client (but not necessarily on the same machine).  The client queries the RS server with a hostname meant to trigger the NS response and stores the TS server\'92s hostname information.  This is dramatically different from a real DNS.  The client reads from a list of hostnames line by line and queries each line to the RS server and then waits for a response.  On the RS/TS end, this data is evaluated against a constructed dictionary made from their respective lists of hostnames, IP address, and flags.\
 \
 The client and the servers behave as the project description outlines.  It was tested successfully on a single macOS system, and then tested on ilabs where client was on a system in ilabs1, rs was on a system on ilabs2, and ts was on a system on ilabs3.  There are no known issues on our end.\
 \
