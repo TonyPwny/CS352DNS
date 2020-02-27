@@ -11,6 +11,22 @@ def server():
     # Establish port via command-line argument
     port = int(sys.argv[1])
     
+    # Create file object to read RS DNS table
+    RSFile = open("PROJI-DNSRS.txt", "r")
+    
+    # Initialize dictionary for DNS table
+    DNSTable = {}
+    
+    # Store RS DNS table in dictionary
+    for line in RSFile:
+    
+        hostname, IPAddress, flag = line.split()
+        DNSTable[hostname] = hostname + " " + IPAddress + " " + flag
+        if flag == "NS":
+            TSHostname = hostname + " - " + flag
+        
+    print("Creating DNS dictionary: " + str(DNSTable) + "\n")
+
     try:
     
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,9 +39,9 @@ def server():
     serverBinding = ('', port)
     serverSocket.bind(serverBinding)
     serverSocket.listen(1)
-    host = socket.gethostname()
-    print("RS server host name: {}".format(host))
-    localhostIP = (socket.gethostbyname(host))
+    RSHostname = socket.gethostname()
+    print("RS server hostname: {}".format(RSHostname))
+    localhostIP = (socket.gethostbyname(RSHostname))
     print("RS server IP address: {}".format(localhostIP))
     clientSocketID, address = serverSocket.accept()
     print("Received client connection request from: {}".format(address))
@@ -34,11 +50,23 @@ def server():
     greeting = "Welcome to CS 352 RS server! Socket to me!"
     clientSocketID.send(greeting.encode('utf-8'))
     
-    # Receive message from the client
-    dataFromClient = clientSocketID.recv(1000)
+    while True:
     
-    # Send back message, but in reverse
-    clientSocketID.send(dataFromClient[::-1].encode('utf-8'))
+        # Receive hostname query from the client
+        queryFromClient = clientSocketID.recv(64)
+    
+        if queryFromClient == "EndOfQuery":
+        
+            break
+        # If hostname is in dictionary, send hostname information
+        elif queryFromClient in DNSTable:
+        
+            clientSocketID.send(str(DNSTable[queryFromClient]).encode('utf-8'))
+        # Hostname not in dictionary, send TS server information
+        else:
+            
+            print(TSHostname)
+            clientSocketID.send(TSHostname.encode('utf-8'))
     
     # Close the server socket
     serverSocket.close()

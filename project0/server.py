@@ -28,7 +28,7 @@ def server():
     clientSocketID.send(greeting.encode('utf-8'))
     
     # Receive message from the client
-    dataFromClient = clientSocketID.recv(100)
+    dataFromClient = clientSocketID.recv(256)
     
     # Send back message, but in reverse
     clientSocketID.send(dataFromClient[::-1].encode('utf-8'))

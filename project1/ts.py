@@ -10,6 +10,20 @@ def server():
 
     # Establish port via command-line argument
     port = int(sys.argv[1])
+    
+    # Create file object to read TS DNS table
+    TSFile = open("PROJI-DNSTS.txt", "r")
+    
+    # Initialize dictionary for DNS table
+    DNSTable = {}
+    
+    # Store TS DNS table in dictionary
+    for line in TSFile:
+    
+        hostname, IPaddress, flag = line.split()
+        DNSTable[hostname] = hostname + " " + IPaddress + " " + flag
+        
+    print("Creating DNS dictionary: " + str(DNSTable) + "\n")
 
     try:
     
@@ -23,9 +37,9 @@ def server():
     serverBinding = ('', port)
     serverSocket.bind(serverBinding)
     serverSocket.listen(1)
-    host = socket.gethostname()
-    print("TS server host name: {}".format(host))
-    localhostIP = (socket.gethostbyname(host))
+    TSHostname = socket.gethostname()
+    print("TS server hostname: {}".format(TSHostname))
+    localhostIP = (socket.gethostbyname(TSHostname))
     print("TS server IP address: {}".format(localhostIP))
     clientSocketID, address = serverSocket.accept()
     print("Received client connection request from: {}".format(address))
@@ -34,11 +48,22 @@ def server():
     greeting = "Welcome to CS 352 TS server! Socket to me!"
     clientSocketID.send(greeting.encode('utf-8'))
     
-    # Receive message from the client
-    dataFromClient = clientSocketID.recv(100)
+    while True:
     
-    # Send back message, but in reverse
-    clientSocketID.send(dataFromClient[::-1].encode('utf-8'))
+        # Receive hostname query from the client
+        queryFromClient = clientSocketID.recv(64)
+    
+        if queryFromClient == "EndOfQuery":
+        
+            break
+        # If hostname is in dictionary, send hostname information
+        elif queryFromClient in DNSTable:
+        
+            clientSocketID.send(str(DNSTable[queryFromClient]).encode('utf-8'))
+        # Hostname not in dictionary, send error message
+        else:
+        
+            clientSocketID.send("Hostname - Error:HOST NOT FOUND\n".encode('utf-8'))
     
     # Close the server socket
     serverSocket.close()

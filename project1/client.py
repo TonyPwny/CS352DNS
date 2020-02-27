@@ -3,87 +3,111 @@
 # resources:
 #   https://www.pythonforbeginners.com/files/reading-and-writing-files-in-python
 #   https://www.pythonforbeginners.com/system/python-sys-argv
+#   https://www.w3schools.com/python/ref_string_split.asp
 
 import sys, threading, time, random, socket
 
 def client():
 
+    # Establish RS hostname
+    
     # Establish RS and TS server port via command-line argument
     RSPort = int(sys.argv[1])
     TSPort = int(sys.argv[2])
     
+    # Create file object to read list of hostnames to query
+    hostnameQueryFile = open("PROJI-HNS.txt", "r")
+    
     # Create file object to write all outputs
-    fileOutput = open("out-proj0.txt", "a")
+    results = open("RESOLVED.txt", "a")
     
     # Establish RS socket
     try:
+    
         clientRSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientRSSocketCreated = "Client socket created to connect to RS server: port " + str(RSPort) + "\n"
         print(clientRSSocketCreated)
-        fileOutput.write(clientRSSocketCreated)
     except socket.error as socketError:
+    
         socketOpenError = 'RS socket already open, error: {} \n'.format(socketError)
         print(socketOpenError)
-        fileOutput.write(socketOpenError)
         exit()
     
     # Establish TS socket
     try:
+    
         clientTSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientTSSocketCreated = "Client socket created to connect to TS server: port " + str(TSPort) + "\n"
         print(clientTSSocketCreated)
-        fileOutput.write(clientTSSocketCreated)
     except socket.error as socketError:
+    
         socketOpenError = 'TS socket already open, error: {} \n'.format(socketError)
         print(socketOpenError)
-        fileOutput.write(socketOpenError)
         exit()
     
-    # Define the port on which you want to connect to the server
-    localhostAddress = socket.gethostbyname(socket.gethostname())
+    # Define the IP address on which you want to connect to the RS server
+    RSIPAddress = socket.gethostbyname(socket.gethostname())
+    print("Hostname on which to connect to RS server: " + str(socket.gethostname()) + "\n" + "IP address: " + str(RSIPAddress) + "\n")
     
     # Connect to the RS server on local machine
-    RSServerBinding = (localhostAddress, RSPort)
+    RSServerBinding = (RSIPAddress, RSPort)
     clientRSSocket.connect(RSServerBinding)
     
-    # Receive greeting from the server
-    dataFromServer = clientRSSocket.recv(100)
-    greetingReceived = "Greeting received from the RS server: {}\n".format(dataFromServer.decode('utf-8'))
-    print(greetingReceived)
-    fileOutput.write(greetingReceived)
+    # Receive greeting from the RS server
+    greetingFromRSServer = clientRSSocket.recv(64)
+    RSGreeting = "Greeting received from the RS server: {}\n".format(greetingFromRSServer.decode('utf-8'))
+    print(RSGreeting)
     
-    # Send a message to the server
-    message = "Hello RS server! Can you slice?"
-    messageSentPrompt = "Sending \"" + message + "\" to RS server...\n"
-    print(messageSentPrompt)
-    fileOutput.write(messageSentPrompt)
-    clientRSSocket.send(message.encode('utf-8'))
+    # Query for TS server hostname
+    TSQueryPrompt = "Querying for TS server hostname...\n"
+    print(TSQueryPrompt)
+    clientRSSocket.send("whatIsTheTSHostname".encode('utf-8'))
+    TSQueryResponse = clientRSSocket.recv(64)
+    TSHostname = TSQueryResponse.split()[0]
+    TSIPAddress = (socket.gethostbyname(TSHostname))
     
-    # Open a local file, read it and append to file output
-    fileRead = open("in-proj0.txt", "r")
+    TSServerBinding = (TSIPAddress, TSPort)
+    clientTSSocket.connect(TSServerBinding)
+    greetingFromTSServer = clientTSSocket.recv(64)
+    TSGreeting = "Greeting received from the TS server: {}\n".format(greetingFromTSServer.decode('utf-8'))
+    print(TSGreeting)
     
-    for line in fileRead:
-        message = line
-        messageSentPrompt = "Sending \"" + line + "\" to RS server...\n"
-        print(messageSentPrompt)
-        fileOutput.write(messageSentPrompt)
-        clientRSSocket.send(message.encode('utf-8'))
+    # Read each line in the file list of hostnames, send each hostname to the RS server, wait for a response, reevaluate response, commit final responses to the results file
+    for line in hostnameQueryFile:
     
-    # Receive response from the server
-    dataFromServer = clientRSSocket.recv(1000)
-    responsePrompt = "Response received from the RS server: {}\n".format(dataFromServer.decode('utf-8'))
-    print(responsePrompt)
-    fileOutput.write(responsePrompt)
+        hostname = line.splitlines()[0].lower()
+        hostnameSentPrompt = "Sending \"" + hostname + "\" to RS server...\n"
+        print(hostnameSentPrompt)
+        clientRSSocket.send(hostname.encode('utf-8'))
+        responseFromServer = clientRSSocket.recv(64)
+        responsePrompt = "Response received from the RS server: {}\n".format(responseFromServer.decode('utf-8'))
+        print(responsePrompt)
+        
+        if responseFromServer.split()[2] == "NS":
+
+            hostnameRedirectPrompt = "Redirecting \"" + hostname + "\" to TS server: " + TSHostname + "\n" + "IP Address: " + TSIPAddress + "\n"
+            print(hostnameRedirectPrompt)
+            clientTSSocket.send(hostname.encode('utf-8'))
+            responseFromServer = clientTSSocket.recv(64)
+            responsePrompt = "Response received from the TS server: {}\n".format(responseFromServer.decode('utf-8'))
+            print(responsePrompt)
+            
+        
+        results.write(responseFromServer)
+
+    # Tell the server's your'e done
+    clientRSSocket.send("EndOfQuery".encode('utf-8'))
+    clientTSSocket.send("EndOfQuery".encode('utf-8'))
+    
     
     # Close the client socket
     clientRSSocket.close()
     clientTSSocket.close()
-    fileOutput.close()
+    hostnameQueryFile.close()
+    results.close()
     exit()
 
 if __name__ == "__main__":
-
-    fileOutput = open("out-proj0.txt", "a")
     
     thread = threading.Thread(name='client', target = client)
     thread.start()
@@ -92,8 +116,6 @@ if __name__ == "__main__":
     
     executionPrompt = "\nClient thread executed, sleep time: " + str(sleepTime) + " sec\n"
     print(executionPrompt)
-    fileOutput.write(executionPrompt)
-    fileOutput.close()
     
     time.sleep(sleepTime)
 

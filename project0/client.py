@@ -28,30 +28,34 @@ def client():
     clientSocket.connect(serverBinding)
     
     # Receive greeting from the server
-    dataFromServer = clientSocket.recv(100)
+    dataFromServer = clientSocket.recv(64)
     greetingReceived = "Greeting received from the server: {}\n".format(dataFromServer.decode('utf-8'))
     print(greetingReceived)
     fileOutput.write(greetingReceived)
     
-    # Send a message to the server
+    # Construct a message to send the server
     message = "Hello! Can you slice?"
     messageSentPrompt = "Sending \"" + message + "\" to server...\n"
     print(messageSentPrompt)
     fileOutput.write(messageSentPrompt)
-    clientSocket.send(message.encode('utf-8'))
     
-    # Receive response from the server
-    dataFromServer = clientSocket.recv(100)
-    responsePrompt = "Response received from the server: {}\n".format(dataFromServer.decode('utf-8'))
-    print(responsePrompt)
-    fileOutput.write(responsePrompt)
-    
-    # Open a local file, read it and append to file output
+    # Open a local file, read each line, send it to the RS server, and append the action to file output
     fileRead = open("in-proj0.txt", "r")
     
     for line in fileRead:
-        print(line)
-        fileOutput.write(line)
+        message = message + line
+        messageSentPrompt = "Sending \"" + line + "\" to RS server...\n"
+        print(messageSentPrompt)
+        fileOutput.write(messageSentPrompt)
+    
+    clientSocket.send(message.encode('utf-8'))
+
+    
+    # Receive response from the server
+    dataFromServer = clientSocket.recv(256)
+    responsePrompt = "Response received from the server: {}\n".format(dataFromServer.decode('utf-8'))
+    print(responsePrompt)
+    fileOutput.write(responsePrompt)
     
     # Close the client socket
     clientSocket.close()
