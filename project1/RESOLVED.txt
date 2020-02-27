@@ -119,4 +119,6 @@ www.google.com 8.6.4.2 Amx.rutgers.edu 192.64.4.2 Akill.cs.rutgers.edu 182.48.3.
 Hostname - Error:HOST NOT FOUND
 www.google.com 8.6.4.2 Amx.rutgers.edu 192.64.4.2 Akill.cs.rutgers.edu 182.48.3.2 Amx.rutgers.com 192.64.4.5 AHostname - Error:HOST NOT FOUND
 Hostname - Error:HOST NOT FOUND
+www.google.com 8.6.4.2 Amx.rutgers.edu 192.64.4.2 Akill.cs.rutgers.edu 182.48.3.2 Amx.rutgers.com 192.64.4.5 AHostname - Error:HOST NOT FOUND
+Hostname - Error:HOST NOT FOUND
 www.google.com 8.6.4.2 Amx.rutgers.edu 192.64.4.2 A

@@ -10,10 +10,11 @@ import sys, threading, time, random, socket
 def client():
 
     # Establish RS hostname
+    RSHostname = str(sys.argv[1])
     
     # Establish RS and TS server port via command-line argument
-    RSPort = int(sys.argv[1])
-    TSPort = int(sys.argv[2])
+    RSPort = int(sys.argv[2])
+    TSPort = int(sys.argv[3])
     
     # Create file object to read list of hostnames to query
     hostnameQueryFile = open("PROJI-HNS.txt", "r")
@@ -46,8 +47,8 @@ def client():
         exit()
     
     # Define the IP address on which you want to connect to the RS server
-    RSIPAddress = socket.gethostbyname(socket.gethostname())
-    print("Hostname on which to connect to RS server: " + str(socket.gethostname()) + "\n" + "IP address: " + str(RSIPAddress) + "\n")
+    RSIPAddress = socket.gethostbyname(RSHostname)
+    print("Hostname on which to connect to RS server: " + RSHostname + "\n" + "IP address: " + str(RSIPAddress) + "\n")
     
     # Connect to the RS server on local machine
     RSServerBinding = (RSIPAddress, RSPort)
