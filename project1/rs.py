@@ -59,6 +59,8 @@ def server():
         # The client is done querying
         if queryFromClient == "shutdownRSServer":
         
+            print("Received shutdown command...")
+            clientSocketID.close()
             break
         # If hostname is in dictionary, send hostname information
         elif queryFromClient in DNSTable:
