@@ -41,20 +41,21 @@ def server():
     print("TS server hostname: {}".format(TSHostname))
     localhostIP = (socket.gethostbyname(TSHostname))
     print("TS server IP address: {}".format(localhostIP))
-    clientSocketID, address = serverSocket.accept()
-    print("Received client connection request from: {}".format(address))
-    
-    # Server greeting message to client
-    greeting = "Welcome to CS 352 TS server! Socket to me!"
-    clientSocketID.send(greeting.encode('utf-8'))
     
     while True:
+    
+        clientSocketID, address = serverSocket.accept()
+        print("Received client connection request from: {}".format(address))
+        
+        # Server greeting message to client
+        greeting = "Welcome to CS 352 TS server! Socket to me!"
+        clientSocketID.send(greeting.encode('utf-8'))
     
         # Receive hostname query from the client
         queryFromClient = clientSocketID.recv(256)
     
         # The client is done querying
-        if queryFromClient == "EndOfQuery":
+        if queryFromClient == "shutdownTSServer":
         
             break
         # If hostname is in dictionary, send hostname information
@@ -65,8 +66,12 @@ def server():
         else:
         
             clientSocketID.send(queryFromClient + " - Error:HOST NOT FOUND".encode('utf-8'))
+            
+        # Close the client socket connection
+        print("\nClosing socket connection.\n")
+        clientSocketID.close()
     
-    # Close the server socket
+    # Close the server socket and shutdown server
     serverSocket.close()
     exit()
 

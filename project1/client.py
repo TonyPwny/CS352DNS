@@ -22,6 +22,84 @@ def client():
     # Create file object to write all outputs
     results = open("RESOLVED.txt", "a")
     
+    # Read a line in the file list of hostnames, connect to RS server, send that hostname to the RS server, wait for a response, reevaluate response, commit final responses to the results file, close connection
+    for line in hostnameQueryFile:
+    
+        # Establish RS socket
+        try:
+        
+            clientRSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            clientRSSocketCreated = "Client socket created to connect to RS server: port " + str(RSPort) + "\n"
+            print(clientRSSocketCreated)
+        except socket.error as socketError:
+        
+            socketOpenError = 'RS socket already open, error: {} \n'.format(socketError)
+            print(socketOpenError)
+            exit()
+    
+        # Define the IP address on which you want to connect to the RS server
+        RSIPAddress = socket.gethostbyname(RSHostname)
+        print("Hostname on which to connect to RS server: " + RSHostname + "\n" + "IP address: " + str(RSIPAddress) + "\n")
+        RSServerBinding = (RSIPAddress, RSPort)
+    
+        # Connect to the RS server
+        clientRSSocket.connect(RSServerBinding)
+        
+        # Receive greeting from the RS server
+        greetingFromRSServer = clientRSSocket.recv(64)
+        RSGreeting = "Greeting received from the RS server: {}\n".format(greetingFromRSServer.decode('utf-8'))
+        print(RSGreeting)
+    
+        hostname = line.splitlines()[0].lower()
+        hostnameSentPrompt = "Sending \"" + hostname + "\" to RS server...\n"
+        print(hostnameSentPrompt)
+        clientRSSocket.send(hostname.encode('utf-8'))
+        responseFromServer = clientRSSocket.recv(256)
+        responsePrompt = "Response received from the RS server: {}\n".format(responseFromServer.decode('utf-8'))
+        print(responsePrompt)
+        
+        # Close connection to RS socket
+        print("Closing RS socket connection.\n")
+        clientRSSocket.close()
+        
+        if responseFromServer.split()[2] == "NS":
+        
+            # Establish TS socket
+            try:
+            
+                clientTSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                clientTSSocketCreated = "Client socket created to connect to TS server: port " + str(TSPort) + "\n"
+                print(clientTSSocketCreated)
+            except socket.error as socketError:
+            
+                socketOpenError = 'TS socket already open, error: {} \n'.format(socketError)
+                print(socketOpenError)
+                exit()
+        
+            TSHostname = responseFromServer.split()[0]
+            TSIPAddress = (socket.gethostbyname(TSHostname))
+        
+            TSServerBinding = (TSIPAddress, TSPort)
+            clientTSSocket.connect(TSServerBinding)
+            greetingFromTSServer = clientTSSocket.recv(64)
+            TSGreeting = "Greeting received from the TS server: {}\n".format(greetingFromTSServer.decode('utf-8'))
+            print(TSGreeting)
+
+            hostnameRedirectPrompt = "Redirecting \"" + hostname + "\" to TS server: " + TSHostname + "\n" + "IP Address: " + TSIPAddress + "\n"
+            print(hostnameRedirectPrompt)
+            clientTSSocket.send(hostname.encode('utf-8'))
+            responseFromServer = clientTSSocket.recv(256)
+            responsePrompt = "Response received from the TS server: {}\n".format(responseFromServer.decode('utf-8'))
+            print(responsePrompt)
+            
+            # Close connection to TS server
+            print("Closing TS socket connection.\n")
+            clientTSSocket.close()
+            
+        
+        results.write(responseFromServer + "\n")
+
+    # Tell the servers to shut down and close connection
     # Establish RS socket
     try:
     
@@ -33,7 +111,20 @@ def client():
         socketOpenError = 'RS socket already open, error: {} \n'.format(socketError)
         print(socketOpenError)
         exit()
+        
+    # Define the IP address on which you want to connect to the RS server
+    RSIPAddress = socket.gethostbyname(RSHostname)
+    print("Hostname on which to connect to RS server: " + RSHostname + "\n" + "IP address: " + str(RSIPAddress) + "\n")
+    RSServerBinding = (RSIPAddress, RSPort)
+
+    # Connect to the RS server
+    clientRSSocket.connect(RSServerBinding)
     
+    # Receive greeting from the RS server
+    greetingFromRSServer = clientRSSocket.recv(64)
+    RSGreeting = "Greeting received from the RS server: {}\n".format(greetingFromRSServer.decode('utf-8'))
+    print(RSGreeting)
+        
     # Establish TS socket
     try:
     
@@ -45,65 +136,28 @@ def client():
         socketOpenError = 'TS socket already open, error: {} \n'.format(socketError)
         print(socketOpenError)
         exit()
-    
-    # Define the IP address on which you want to connect to the RS server
-    RSIPAddress = socket.gethostbyname(RSHostname)
-    print("Hostname on which to connect to RS server: " + RSHostname + "\n" + "IP address: " + str(RSIPAddress) + "\n")
-    
-    # Connect to the RS server
-    RSServerBinding = (RSIPAddress, RSPort)
-    clientRSSocket.connect(RSServerBinding)
-    
-    # Receive greeting from the RS server
-    greetingFromRSServer = clientRSSocket.recv(64)
-    RSGreeting = "Greeting received from the RS server: {}\n".format(greetingFromRSServer.decode('utf-8'))
-    print(RSGreeting)
-    
-    # Query for TS server hostname
-    TSQueryPrompt = "Querying for TS server hostname...\n"
-    print(TSQueryPrompt)
-    clientRSSocket.send("whatIsTheTSHostname.TSServer".encode('utf-8'))
-    TSQueryResponse = clientRSSocket.recv(64)
-    TSHostname = TSQueryResponse.split()[0]
+        
     TSIPAddress = (socket.gethostbyname(TSHostname))
-    
+
     TSServerBinding = (TSIPAddress, TSPort)
     clientTSSocket.connect(TSServerBinding)
     greetingFromTSServer = clientTSSocket.recv(64)
     TSGreeting = "Greeting received from the TS server: {}\n".format(greetingFromTSServer.decode('utf-8'))
     print(TSGreeting)
     
-    # Read each line in the file list of hostnames, send each hostname to the RS server, wait for a response, reevaluate response, commit final responses to the results file
-    for line in hostnameQueryFile:
-    
-        hostname = line.splitlines()[0].lower()
-        hostnameSentPrompt = "Sending \"" + hostname + "\" to RS server...\n"
-        print(hostnameSentPrompt)
-        clientRSSocket.send(hostname.encode('utf-8'))
-        responseFromServer = clientRSSocket.recv(256)
-        responsePrompt = "Response received from the RS server: {}\n".format(responseFromServer.decode('utf-8'))
-        print(responsePrompt)
-        
-        if responseFromServer.split()[2] == "NS":
-
-            hostnameRedirectPrompt = "Redirecting \"" + hostname + "\" to TS server: " + TSHostname + "\n" + "IP Address: " + TSIPAddress + "\n"
-            print(hostnameRedirectPrompt)
-            clientTSSocket.send(hostname.encode('utf-8'))
-            responseFromServer = clientTSSocket.recv(256)
-            responsePrompt = "Response received from the TS server: {}\n".format(responseFromServer.decode('utf-8'))
-            print(responsePrompt)
-            
-        
-        results.write(responseFromServer + "\n")
-
-    # Tell the servers you're done
-    clientRSSocket.send("EndOfQuery".encode('utf-8'))
-    clientTSSocket.send("EndOfQuery".encode('utf-8'))
-    
-    
-    # Close the client sockets and files
+    # Send shutdown command
+    print("Shutting down RS and TS servers...\n")
+    clientRSSocket.send("shutdownRSServer".encode('utf-8'))
+    clientTSSocket.send("shutdownTSServer".encode('utf-8'))
+    # Close connection to RS socket
+    print("Closing RS socket connection.\n")
     clientRSSocket.close()
+    # Close connection to TS socket
+    print("Closing TS socket connection.\n")
     clientTSSocket.close()
+    
+    
+    # Close all files and shutdown client
     hostnameQueryFile.close()
     results.close()
     exit()
