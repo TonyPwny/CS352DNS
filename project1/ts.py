@@ -1,59 +1,57 @@
-# Anthony Tiongson
-# RS (a simplified root DNS server)
-# Try to use a dictionary to store data in PROJI-DNSRS.txt
+# Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
+# TS (a simplified top-level DNS server)
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv
 
 import sys, threading, time, random, socket
 
 def server():
-    
+
     # Establish port via command-line argument
     port = int(sys.argv[1])
     
-    # Create file object to read RS DNS table
-    RSFile = open("PROJI-DNSRS.txt", "r")
+    # Create file object to read TS DNS table
+    TSFile = open("PROJI-DNSTS.txt", "r")
     
     # Initialize dictionary for DNS table
     DNSTable = {}
     
-    # Store RS DNS table in dictionary
-    for line in RSFile:
+    # Store TS DNS table in dictionary
+    for line in TSFile:
     
-        hostname, IPAddress, flag = line.split()
-        DNSTable[hostname] = hostname + " " + IPAddress + " " + flag
-        if flag == "NS":
-            TSHostname = hostname + " - " + flag
+        hostname, IPaddress, flag = line.split()
+        hostname = hostname.lower()
+        DNSTable[hostname] = hostname + " " + IPaddress + " " + flag
         
     print("Creating DNS dictionary: " + str(DNSTable) + "\n")
 
     try:
     
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("RS server socket created: port " + str(port) + "\n")
+        print("TS server socket created: port " + str(port) + "\n")
     except socket.error as socketError:
     
-        print('RS socket already open, error: {}\n'.format(socketError))
+        print('TS socket already open, error: {}\n'.format(socketError))
         exit()
         
     serverBinding = ('', port)
     serverSocket.bind(serverBinding)
     serverSocket.listen(1)
-    RSHostname = socket.gethostname()
-    print("RS server hostname: {}".format(RSHostname))
-    localhostIP = (socket.gethostbyname(RSHostname))
-    print("RS server IP address: {}".format(localhostIP))
+    TSHostname = socket.gethostname()
+    print("TS server hostname: {}".format(TSHostname))
+    localhostIP = (socket.gethostbyname(TSHostname))
+    print("TS server IP address: {}".format(localhostIP))
     clientSocketID, address = serverSocket.accept()
     print("Received client connection request from: {}".format(address))
     
     # Server greeting message to client
-    greeting = "Welcome to CS 352 RS server! Socket to me!"
+    greeting = "Welcome to CS 352 TS server! Socket to me!"
     clientSocketID.send(greeting.encode('utf-8'))
     
     while True:
     
         # Receive hostname query from the client
-        queryFromClient = clientSocketID.recv(64)
+        queryFromClient = clientSocketID.recv(256)
     
         # The client is done querying
         if queryFromClient == "EndOfQuery":
@@ -63,10 +61,10 @@ def server():
         elif queryFromClient in DNSTable:
         
             clientSocketID.send(str(DNSTable[queryFromClient]).encode('utf-8'))
-        # Hostname not in dictionary, send TS server information
+        # Hostname not in dictionary, send error message
         else:
-            
-            clientSocketID.send(TSHostname.encode('utf-8'))
+        
+            clientSocketID.send(queryFromClient + " - Error:HOST NOT FOUND".encode('utf-8'))
     
     # Close the server socket
     serverSocket.close()
@@ -79,7 +77,7 @@ if __name__ == "__main__":
     
     sleepTime = random.random() * 5
     
-    print("\nRS server thread executed, sleep time: " + str(sleepTime) + " sec\n")
+    print("\nTS server thread executed, sleep time: " + str(sleepTime) + " sec\n")
     
     time.sleep(sleepTime)
 
