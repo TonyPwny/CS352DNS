@@ -92,7 +92,7 @@ def client():
             responsePrompt = "Response received from the TS server: {}\n".format(responseFromServer.decode('utf-8'))
             print(responsePrompt)
             
-            # Close connection to TS server
+            # Close connection to TS socket
             print("Closing TS socket connection.\n")
             clientTSSocket.close()
             
