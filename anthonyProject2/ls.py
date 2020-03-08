@@ -145,12 +145,12 @@ def server():
             print("Shutting down TS2 server...\n")
             clientTS2Socket.send("shutdownTSServer".encode('utf-8'))
             # Close connection to LS socket
-            print("Closing TS1 socket connection.\n")
+            print("Closing TS2 socket connection.\n")
             clientTS2Socket.close()
             
             clientSocketID.close()
             break
-        # Send hostname to TS servers, wait 5 sec for each server to respond, then send results to client
+        # Send hostname to TS servers, wait 5 sec for a response, then send results to client
         else:
         
             # Establish TS1 socket and server
@@ -196,56 +196,64 @@ def server():
             hostnameSentPrompt = "Sending \"" + hostname + "\" to TS1 and TS2 servers...\n"
             print(hostnameSentPrompt)
             
-            # Set a timeout for the TS1 connection to 2.50 seconds
-            clientTS1Socket.settimeout(2.45)
-            clientTS1Socket.send(hostname.encode('utf-8'))
+            while True:
             
-            try:
-            
-                responseFromTS1Server = clientTS1Socket.recv(256)
-                responseTS1Prompt = "Response received from the TS1 server: {}\n".format(responseFromTS1Server.decode('utf-8'))
-                print(responseTS1Prompt)
-                clientSocketID.send(responseFromTS1Server.encode('utf-8'))
-            except socket.timeout, TS1Timeout:
-
-                print("TS1Timeout")
-                responseFromTS1Server = None
-            except socket.error, TS1Error:
-            
-                # Something else happened, handle error, exit, etc.
-                print TS1Error
-                sys.exit(1)
-            
-            # Set a timeout for the TS2 connection to 0.20 seconds
-            clientTS2Socket.settimeout(2.45)
-            clientTS2Socket.send(hostname.encode('utf-8'))
-
-            try:
-            
-                responseFromTS2Server = clientTS2Socket.recv(256)
-                responseTS2Prompt = "Response received from the TS2 server: {}\n".format(responseFromTS2Server.decode('utf-8'))
-                print(responseTS2Prompt)
-                clientSocketID.send(responseFromTS2Server.encode('utf-8'))
-            except socket.timeout, TS2Timeout:
-            
-                print("TS2Timeout")
-                responseFromTS2Server = None
-            except socket.error, TS2Error:
-            
-                # Something else happened, handle error, exit, etc.
-                print TS2Error
-                sys.exit(1)
-            
-            if responseFromTS1Server is None and responseFromTS2Server is None:
+                # Set a timeout for the TS1 connection to 2.45 seconds
+                clientTS1Socket.settimeout(2.45)
+                clientTS1Socket.send(hostname.encode('utf-8'))
                 
-                noResponse = hostname + " - Error:HOST NOT FOUND"
-                clientSocketID.send(noResponse.encode('utf-8'))
-            
-            # Close connection to TS1 and TS2 sockets
-            print("Closing TS1 socket connection.\n")
-            clientTS1Socket.close()
-            print("Closing TS2 socket connection.\n")
-            clientTS2Socket.close()
+                try:
+                
+                    responseFromTS1Server = clientTS1Socket.recv(256)
+                    responseTS1Prompt = "Response received from the TS1 server: {}\n".format(responseFromTS1Server.decode('utf-8'))
+                    print(responseTS1Prompt)
+                    clientSocketID.send(responseFromTS1Server.encode('utf-8'))
+                    print("Closing TS1 socket connection.\n")
+                    clientTS1Socket.close()
+                    break
+                    
+                except socket.timeout, TS1Timeout:
+
+                    print("TS1Timeout")
+                    responseFromTS1Server = None
+                    print("Closing TS1 socket connection.\n")
+                    clientTS1Socket.close()
+                except socket.error, TS1Error:
+                
+                    # Something else happened, handle error, exit, etc.
+                    print TS1Error
+                    sys.exit(1)
+                
+                # Set a timeout for the TS2 connection to 2.45 seconds
+                clientTS2Socket.settimeout(2.45)
+                clientTS2Socket.send(hostname.encode('utf-8'))
+
+                try:
+                
+                    responseFromTS2Server = clientTS2Socket.recv(256)
+                    responseTS2Prompt = "Response received from the TS2 server: {}\n".format(responseFromTS2Server.decode('utf-8'))
+                    print(responseTS2Prompt)
+                    clientSocketID.send(responseFromTS2Server.encode('utf-8'))
+                    print("Closing TS2 socket connection.\n")
+                    clientTS2Socket.close()
+                    break
+                except socket.timeout, TS2Timeout:
+                
+                    print("TS2Timeout")
+                    responseFromTS2Server = None
+                    print("Closing TS2 socket connection.\n")
+                    clientTS2Socket.close()
+                except socket.error, TS2Error:
+                
+                    # Something else happened, handle error, exit, etc.
+                    print TS2Error
+                    sys.exit(1)
+                
+                if responseFromTS1Server is None and responseFromTS2Server is None:
+                    
+                    noResponse = hostname + " - Error:HOST NOT FOUND"
+                    clientSocketID.send(noResponse.encode('utf-8'))
+                    break
             
         # Close the client socket connection
         print("\nClosing client socket connection.\n")
