@@ -199,9 +199,13 @@ def server():
             
             while True:
             
-                # Set a timeout for the TS1 connection to 2.45 seconds
+                # Set a timeout for the TS1 connection to 2.45 seconds and send hostname query
                 clientTS1Socket.settimeout(2.45)
                 clientTS1Socket.send(hostname.encode('utf-8'))
+                
+                # Set a timeout for the TS2 connection to 2.45 seconds and send hostname query
+                clientTS2Socket.settimeout(2.45)
+                clientTS2Socket.send(hostname.encode('utf-8'))
                 
                 try:
                 
@@ -212,7 +216,6 @@ def server():
                     print("Closing TS1 socket connection.\n")
                     clientTS1Socket.close()
                     break
-                    
                 except socket.timeout, TS1Timeout:
 
                     print("TS1Timeout")
@@ -224,10 +227,6 @@ def server():
                     # Something else happened, handle error, exit, etc.
                     print TS1Error
                     sys.exit(1)
-                
-                # Set a timeout for the TS2 connection to 2.45 seconds
-                clientTS2Socket.settimeout(2.45)
-                clientTS2Socket.send(hostname.encode('utf-8'))
 
                 try:
                 
