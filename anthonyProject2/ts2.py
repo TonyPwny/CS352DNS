@@ -93,7 +93,7 @@ def server():
         # Hostname not in dictionary, just close the connection
         else:
             
-            time.sleep(5.25)
+            time.sleep(2.50)
             
         # Close the client socket connection
         print("\nClosing socket connection.\n")

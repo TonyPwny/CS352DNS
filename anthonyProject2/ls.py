@@ -173,9 +173,6 @@ def server():
             # Connect to the TS1 server
             clientTS1Socket.connect(TS1ServerBinding)
             
-            # Set a timeout for the TS1 connection to 5 seconds
-            clientTS1Socket.settimeout(5)
-            
             # Establish TS2 socket and server
             try:
             
@@ -195,14 +192,13 @@ def server():
         
             # Connect to the TS2 server
             clientTS2Socket.connect(TS2ServerBinding)
-            
-            # Set a timeout for the TS2 connection to 5 seconds
-            clientTS2Socket.settimeout(5)
         
             hostnameSentPrompt = "Sending \"" + hostname + "\" to TS1 and TS2 servers...\n"
             print(hostnameSentPrompt)
+            
+            # Set a timeout for the TS1 connection to 2.50 seconds
+            clientTS1Socket.settimeout(2.45)
             clientTS1Socket.send(hostname.encode('utf-8'))
-            clientTS2Socket.send(hostname.encode('utf-8'))
             
             try:
             
@@ -219,6 +215,10 @@ def server():
                 # Something else happened, handle error, exit, etc.
                 print TS1Error
                 sys.exit(1)
+            
+            # Set a timeout for the TS2 connection to 0.20 seconds
+            clientTS2Socket.settimeout(2.45)
+            clientTS2Socket.send(hostname.encode('utf-8'))
 
             try:
             
