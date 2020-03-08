@@ -41,6 +41,7 @@
 #
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv
+#   https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
 
 import sys, threading, time, random, socket
 
