@@ -90,14 +90,10 @@ def server():
         elif queryFromClient in DNSTable:
         
             clientSocketID.send(str(DNSTable[queryFromClient]).encode('utf-8'))
-        # Hostname not in dictionary, just close the connection
-        else:
-            
-            time.sleep(2.50)
-            
-        # Close the client socket connection
-        print("\nClosing socket connection.\n")
-        clientSocketID.close()
+            # Close the client socket connection
+            print("\nClosing socket connection.\n")
+            clientSocketID.close()
+        # Hostname not in dictionary, do not do anything
     
     # Close the server socket and shutdown server
     serverSocket.close()

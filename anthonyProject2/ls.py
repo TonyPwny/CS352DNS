@@ -42,8 +42,27 @@
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv
 #   https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
+#   https://stackoverflow.com/questions/13941562/why-can-i-not-catch-a-queue-empty-exception-from-a-multiprocessing-queue/13941865
 
-import sys, threading, time, random, socket
+import queue, random, socket, sys, threading, time
+
+def query(clientSocket, hostname, queue):
+    
+    clientSocket.settimeout(5)
+    clientSocket.send(hostname.encode('utf-8'))
+    try:
+    
+        responseFromServer = clientSocket.recv(256).decode('utf-8')
+        queue.put(responseFromServer)
+    except socket.timeout, queryTimeout:
+
+        responseFromServer = str(queryTimeout)
+        queue.put(responseFromServer)
+    except socket.error, queryError:
+    
+        # Something else happened, handle error, exit, etc.
+        print queryError
+        sys.exit(1)
 
 def server():
     
@@ -149,7 +168,6 @@ def server():
             print("Closing TS2 socket connection.\n")
             clientTS2Socket.close()
             
-            clientSocketID.close()
             break
         # Send hostname to TS servers, wait 5 sec for a response, then send results to client
         else:
@@ -197,62 +215,60 @@ def server():
             hostnameSentPrompt = "Sending \"" + hostname + "\" to TS1 and TS2 servers...\n"
             print(hostnameSentPrompt)
             
-            while True:
+            queueThread_1 = queue.Queue()
+            queueThread_2 = queue.Queue()
+            queryThread_1 = threading.Thread(name='queryThreadTS1', target = query, args=(clientTS1Socket, hostname, queueThread_1,))
+            queryThread_2 = threading.Thread(name='queryThreadTS2', target = query, args=(clientTS2Socket, hostname, queueThread_2,))
             
-                # Set a timeout for the TS1 connection to 2.45 seconds and send hostname query
-                clientTS1Socket.settimeout(2.45)
-                clientTS1Socket.send(hostname.encode('utf-8'))
-                
-                # Set a timeout for the TS2 connection to 2.45 seconds and send hostname query
-                clientTS2Socket.settimeout(2.45)
-                clientTS2Socket.send(hostname.encode('utf-8'))
+            queryThread_1.start()
+            queryThread_2.start()
+            responseFromTS1Server = None
+            responseFromTS2Server = None
+
+            while True:
                 
                 try:
                 
-                    responseFromTS1Server = clientTS1Socket.recv(256)
-                    responseTS1Prompt = "Response received from the TS1 server: {}\n".format(responseFromTS1Server.decode('utf-8'))
+                    responseFromTS1Server = queueThread_1.get_nowait()
+                except queue.Empty:
+                    
+                    pass
+                    
+                try:
+                
+                    responseFromTS2Server = queueThread_2.get_nowait()
+                except queue.Empty:
+                
+                    pass
+                    
+                if responseFromTS1Server is not None and responseFromTS1Server != "timed out":
+                    
+                    print("Popped " + responseFromTS1Server + " from queue 1.\n")
+                    responseTS1Prompt = "Response received from the TS1 server: {}\n".format(responseFromTS1Server)
                     print(responseTS1Prompt)
                     clientSocketID.send(responseFromTS1Server.encode('utf-8'))
-                    print("Closing TS1 socket connection.\n")
+                    print("Closing TS1 and TS2 socket connections.\n")
                     clientTS1Socket.close()
+                    clientTS2Socket.close()
                     break
-                except socket.timeout, TS1Timeout:
-
-                    print("TS1Timeout")
-                    responseFromTS1Server = None
-                    print("Closing TS1 socket connection.\n")
-                    clientTS1Socket.close()
-                except socket.error, TS1Error:
+                elif responseFromTS2Server is not None and responseFromTS2Server != "timed out":
                 
-                    # Something else happened, handle error, exit, etc.
-                    print TS1Error
-                    sys.exit(1)
-
-                try:
-                
-                    responseFromTS2Server = clientTS2Socket.recv(256)
-                    responseTS2Prompt = "Response received from the TS2 server: {}\n".format(responseFromTS2Server.decode('utf-8'))
+                    print("Popped " + responseFromTS2Server + " from queue 2.\n")
+                    responseTS2Prompt = "Response received from the TS2 server: {}\n".format(responseFromTS2Server)
                     print(responseTS2Prompt)
                     clientSocketID.send(responseFromTS2Server.encode('utf-8'))
-                    print("Closing TS2 socket connection.\n")
+                    print("Closing TS1 and TS2 socket connections.\n")
+                    clientTS1Socket.close()
                     clientTS2Socket.close()
                     break
-                except socket.timeout, TS2Timeout:
+                elif responseFromTS1Server == "timed out" and responseFromTS2Server == "timed out":
                 
-                    print("TS2Timeout")
-                    responseFromTS2Server = None
-                    print("Closing TS2 socket connection.\n")
-                    clientTS2Socket.close()
-                except socket.error, TS2Error:
-                
-                    # Something else happened, handle error, exit, etc.
-                    print TS2Error
-                    sys.exit(1)
-                
-                if responseFromTS1Server is None and responseFromTS2Server is None:
-                    
                     noResponse = hostname + " - Error:HOST NOT FOUND"
                     clientSocketID.send(noResponse.encode('utf-8'))
+                    print("TS1 and TS2 timeout...")
+                    print("Closing TS1 and TS2 socket connections.\n")
+                    clientTS1Socket.close()
+                    clientTS2Socket.close()
                     break
             
         # Close the client socket connection
