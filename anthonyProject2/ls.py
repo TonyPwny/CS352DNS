@@ -1,43 +1,5 @@
 # Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
 # LS (a simplified load-balancing DNS server)
-#    The LS receives queries from the client and forwards them directly to
-#    both TS1 and TS2.
-#
-#    Since the DNS tables for TS1 and TS2 have no overlap, at most one will
-#    respond to any query. It is possible that neither of them responds.
-#
-#    If the LS receives a response from one of the TS servers, it should
-#    just forward the response as is to the client. (As shown above, this
-#    string will have the format
-#
-#    Hostname IPaddress A
-#
-#    as obtained from the TS that just responded.)
-#
-#    If the LS does not receive a response from either TS within a time
-#    interval of 5 seconds (OK to wait slightly longer), the LS must send
-#    the client the message
-#
-#    Hostname - Error:HOST NOT FOUND
-#
-#    where the Hostname is the client-requested host name.
-#
-#    The LS maintains three connections (and sockets): one with the client,
-#    and one with each TS server.
-#
-#    The most tricky part of implementing the LS is figuring out which TS
-#    has pushed data into its corresponding socket (if at all one of them
-#    has), and timing out when neither has pushed data. Think carefully
-#    about how you will achieve this. Just performing recv() calls on the
-#    two TS sockets won't do it, since recv() by default is a __blocking
-#    call__: if you recv() on the TS1 socket but TS1 hasn't pushed any
-#    data, your LS program will indefinitely hang.
-#
-#    python ls.py lsListenPort ts1Hostname ts1ListenPort ts2Hostname ts2ListenPort
-#    - ts1ListenPort and ts2ListenPort are ports accepting incoming connections
-#      at TS1 and TS2 (resp.) from LS
-#    - lsListenPort is the port accepting incoming connections from the
-#      client at LS
 #
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv

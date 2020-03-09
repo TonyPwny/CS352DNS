@@ -1,34 +1,5 @@
 # Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
 # TS1 (a simplified top-level DNS server)
-#    There are two TS servers which each maintain a DNS table consisting of
-#    three fields:
-#
-#    - Hostname
-#    - IP address
-#    - Flag (A only; no NS)
-#
-#    For each query received from the LS, each TS server does a lookup in its
-#    DNS table, and if there is a match, sends the DNS entry as a string:
-#
-#    Hostname IPaddress A
-#
-#    If the Hostname isn't found in the DNS table, the TS server sends
-#    nothing back. A TS server without the hostname in its local DNS table
-#    MUST NOT send any data to the LS or the client.
-#
-#    DNS tables can be read from PROJ2-DNSTS1.txt and PROJ2-DNSTS2.txt
-#    respectively for TS1 and TS2. We will ensure that the two DNS tables
-#    have no overlapping hostnames.
-#
-#    Note that DNS lookups are case-insensitive. If there is a hit in the
-#    local DNS table, the TS programs must respond with the version of the
-#    string that is in their local DNS table.
-#
-#    Each TS maintains just one connection -- with the LS.
-#
-#    python ts1.py ts1ListenPort
-#    - ts1ListenPort and ts2ListenPort are ports accepting incoming connections
-#    at TS1 and TS2 (resp.) from LS
 #
 # resources:
 #   https://www.pythonforbeginners.com/system/python-sys-argv

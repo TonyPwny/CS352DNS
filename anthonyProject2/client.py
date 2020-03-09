@@ -1,21 +1,5 @@
 # Anthony Tiongson (ast119) with assistance from Nicolas Gundersen (neg62)
 # Client side DNS
-#    The client is very simple. The client sends requests only to the
-#    LS. The client also directly prints the output it receives from the
-#    LS.
-#
-#    The client reads hostnames to query from PROJ2-HNS.txt, one query per
-#    line. The client must write all the outputs it receives from LS into a
-#    file, RESOLVED.txt, one line per query.
-#
-#    The client must NOT communicate directly with TS1 or TS2. The client
-#    maintains only one connection -- with the LS.
-#
-#    python client.py lsHostname lsListenPort
-#    - lsListenPort is the port accepting incoming connections from the
-#      client at LS
-#    - lsHostname, ts1Hostname, and ts2Hostname are the hostnames of the machines
-#      running LS, TS1, and TS2 (resp.)
 #
 # resources:
 #   https://www.pythonforbeginners.com/files/reading-and-writing-files-in-python
