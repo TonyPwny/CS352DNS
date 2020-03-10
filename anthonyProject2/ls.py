@@ -8,6 +8,7 @@
 
 import queue, random, socket, sys, threading, time
 
+# query function to query a hostname to a server on clientSocket and to put results in a defined queue
 def query(clientSocket, hostname, queue):
     
     clientSocket.settimeout(5)
@@ -26,6 +27,7 @@ def query(clientSocket, hostname, queue):
         print queryError
         sys.exit(1)
 
+# server function
 def server():
     
     # Establish LS server port via command-line argument
