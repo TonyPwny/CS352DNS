@@ -8,14 +8,46 @@
 
 import queue, random, socket, sys, threading, time
 
-# query function to query a hostname to a server on clientSocket and to put results in a defined queue
-def query(clientSocket, hostname, queue):
-    
-    clientSocket.settimeout(5)
-    clientSocket.send(hostname.encode('utf-8'))
+# socketOpen function to open and return a socket in a given port designated by a label.
+def socketOpen(label, port):
+
     try:
     
-        responseFromServer = clientSocket.recv(256).decode('utf-8')
+        socketOpen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socketOpenPrompt = "Socket opened to connect to " + label + ": port " + str(port) + "\n"
+        print(socketOpenPrompt)
+        return socketOpen
+    except socket.error as socketOpenError:
+    
+        socketOpenError = label + ' socket already open, error: {} \n'.format(socketError)
+        print(socketOpenError)
+        exit()
+
+# socketBind function to establish and return a socket binding using a given hostname and port and designated by a label.
+def socketBind(label, hostname, port):
+
+    # Define the IP address on which you want to connect to the LS server.
+    IPAddress = socket.gethostbyname(hostname)
+    print("Hostname on which to connect to " + label + " server: " + hostname + "\n" + "IP address: " + str(IPAddress) + "\n")
+    socketBind = (IPAddress, port)
+    return socketBind
+
+# serverInfo function prints out the hostname and IP address for a server designated by a label
+def serverInfo(label):
+    
+    hostname = socket.gethostname()
+    print(label + " hostname: {}".format(hostname))
+    localhostIP = (socket.gethostbyname(hostname))
+    print(label + " IP address: {}".format(localhostIP))
+    
+# query function to query a hostname to a server on serverSocket and to put results in a defined queue.
+def query(serverSocket, hostname, queue):
+    
+    serverSocket.settimeout(5)
+    serverSocket.send(hostname.encode('utf-8'))
+    try:
+    
+        responseFromServer = serverSocket.recv(256).decode('utf-8')
         queue.put(responseFromServer)
     except socket.timeout, queryTimeout:
 
@@ -27,230 +59,162 @@ def query(clientSocket, hostname, queue):
         print queryError
         sys.exit(1)
 
-# server function
-def server():
-    
-    # Establish LS server port via command-line argument
-    LSPort = int(sys.argv[1])
-    
-    # Establish TS1 hostname via command-line argument
-    TS1Hostname = str(sys.argv[2])
-    
-    # Establish TS1 server port via command-line argument
-    TS1Port = int(sys.argv[3])
-    
-    # Establish TS2 hostname via command-line argument
-    TS2Hostname = str(sys.argv[4])
-    
-    # Establish TS2 server port via command-line argument
-    TS2Port = int(sys.argv[5])
+# shutdownServer function sends a shutdown command to a server with a given hostname and port designated by a label.
+def shutdownServer(label, hostname, port):
 
-    # Establish LS server socket
-    try:
-    
-        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("LS server socket created: port " + str(LSPort) + "\n")
-    except socket.error as socketError:
-    
-        print('LS socket already open, error: {}\n'.format(socketError))
-        exit()
+    # Tell the server to shut down and close connection.
+    # Open server socket.
+    server = socketOpen(label, port)
         
-    serverBinding = ('', LSPort)
-    serverSocket.bind(serverBinding)
-    serverSocket.listen(1)
-    LSHostname = socket.gethostname()
-    print("LS server hostname: {}".format(LSHostname))
-    localhostIP = (socket.gethostbyname(LSHostname))
-    print("LS server IP address: {}".format(localhostIP))
+    # Create server socketBind and connect to the server.
+    server.connect(socketBind(label, hostname, port))
     
+    # Send shutdown command.
+    print("Shutting down " + label + "...\n")
+    shutdownCommand = "shutdown" + label
+    server.send(shutdownCommand.encode('utf-8'))
+    # Close connection to server socket.
+    print("Closing " + label + " socket connection.\n")
+    server.close()
+
+def resolve(clientConnection, response, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server):
+
+    clientConnection.send(response.encode('utf-8'))
+    print("Closing " + serverLabelTS1 + " and " + serverLabelTS2 + " socket connections.\n")
+    TS1Server.close()
+    TS2Server.close()
+    
+def evaluate(serverLabelTS1, serverLabelTS2, clientConnection, hostname, TS1Server, TS2Server, queueThreadTS1, queueThreadTS2):
+
+    responseFromTS1Server = None
+    responseFromTS2Server = None
+
+    while True:
+        
+        try:
+        
+            responseFromTS1Server = queueThreadTS1.get_nowait()
+        except queue.Empty:
+            
+            pass
+            
+        try:
+        
+            responseFromTS2Server = queueThreadTS2.get_nowait()
+        except queue.Empty:
+        
+            pass
+            
+        if responseFromTS1Server is not None and responseFromTS1Server != "timed out":
+            
+            responseTS1Prompt = "Response received from the " + serverLabelTS1 + ": {}\n".format(responseFromTS1Server)
+            print(responseTS1Prompt)
+            resolve(clientConnection, responseFromTS1Server, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            break
+        elif responseFromTS2Server is not None and responseFromTS2Server != "timed out":
+        
+            responseTS2Prompt = "Response received from the " + serverLabelTS2 + ": {}\n".format(responseFromTS2Server)
+            print(responseTS2Prompt)
+            resolve(clientConnection, responseFromTS2Server, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            break
+        elif responseFromTS1Server == "timed out" and responseFromTS2Server == "timed out":
+        
+            print(serverLabelTS1 + " and " + serverLabelTS2 + " timeout...")
+            noResponse = hostname + " - Error:HOST NOT FOUND"
+            resolve(clientConnection, noResponse, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            break
+
+def queryMultiThread(client, clientLabel, label, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2):
+
     while True:
     
-        clientSocketID, address = serverSocket.accept()
-        print("Received client connection request from: {}".format(address))
+        clientConnection, address = client.accept()
+        print("Received " + clientLabel + " connection request from: {}".format(address))
     
         # Receive hostname query from the client
-        hostname = clientSocketID.recv(256)
+        hostname = clientConnection.recv(256)
     
         # The client is done querying
-        if hostname == "shutdownLSServer":
+        if hostname == "shutdown" + label:
         
             print("Received shutdown command...")
             
-            # Tell the TS1 server to shut down and close connection
-            # Establish TS1 socket
-            try:
-            
-                clientTS1Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                clientTS1SocketCreated = "Client socket created to connect to TS1 server: port " + str(TS1Port) + "\n"
-                print(clientTS1SocketCreated)
-            except socket.error as socketError:
-            
-                socketOpenError = 'TS1 socket already open, error: {} \n'.format(socketError)
-                print(socketOpenError)
-                exit()
-                
-            # Define the IP address on which you want to connect to the TS1 server
-            TS1IPAddress = socket.gethostbyname(TS1Hostname)
-            print("Hostname on which to connect to TS1 server: " + TS1Hostname + "\n" + "IP address: " + str(TS1IPAddress) + "\n")
-            TS1ServerBinding = (TS1IPAddress, TS1Port)
-
-            # Connect to the LS server
-            clientTS1Socket.connect(TS1ServerBinding)
-            
-            # Send shutdown command
-            print("Shutting down TS1 server...\n")
-            clientTS1Socket.send("shutdownTSServer".encode('utf-8'))
-            # Close connection to LS socket
-            print("Closing TS1 socket connection.\n")
-            clientTS1Socket.close()
-            
-            # Tell the TS2 server to shut down and close connection
-            # Establish TS2 socket
-            try:
-            
-                clientTS2Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                clientTS2SocketCreated = "Client socket created to connect to TS2 server: port " + str(TS2Port) + "\n"
-                print(clientTS2SocketCreated)
-            except socket.error as socketError:
-            
-                socketOpenError = 'TS2 socket already open, error: {} \n'.format(socketError)
-                print(socketOpenError)
-                exit()
-                
-            # Define the IP address on which you want to connect to the TS2 server
-            TS2IPAddress = socket.gethostbyname(TS2Hostname)
-            print("Hostname on which to connect to TS2 server: " + TS2Hostname + "\n" + "IP address: " + str(TS2IPAddress) + "\n")
-            TS2ServerBinding = (TS2IPAddress, TS2Port)
-
-            # Connect to the TS2 server
-            clientTS2Socket.connect(TS2ServerBinding)
-            
-            # Send shutdown command
-            print("Shutting down TS2 server...\n")
-            clientTS2Socket.send("shutdownTSServer".encode('utf-8'))
-            # Close connection to LS socket
-            print("Closing TS2 socket connection.\n")
-            clientTS2Socket.close()
-            
+            # Tell the TS1 and TS2 servers to shut down and close connections
+            shutdownServer(serverLabelTS1, hostnameTS1, portTS1)
+            shutdownServer(serverLabelTS2, hostnameTS2, portTS2)
             break
         # Send hostname to TS servers, wait 5 sec for a response, then send results to client
         else:
-        
-            # Establish TS1 socket and server
-            try:
             
-                clientTS1Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                clientTS1SocketCreated = "Client socket created to connect to TS1 server: port " + str(TS1Port) + "\n"
-                print(clientTS1SocketCreated)
-            except socket.error as socketError:
-            
-                socketOpenError = 'TS1 socket already open, error: {} \n'.format(socketError)
-                print(socketOpenError)
-                exit()
-        
-            # Define the IP address on which you want to connect to the TS1 server
-            TS1IPAddress = socket.gethostbyname(TS1Hostname)
-            print("Hostname on which to connect to TS1 server: " + TS1Hostname + "\n" + "IP address: " + str(TS1IPAddress) + "\n")
-            TS1ServerBinding = (TS1IPAddress, TS1Port)
-        
-            # Connect to the TS1 server
-            clientTS1Socket.connect(TS1ServerBinding)
-            
-            # Establish TS2 socket and server
-            try:
-            
-                clientTS2Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                clientTS2SocketCreated = "Client socket created to connect to TS2 server: port " + str(TS2Port) + "\n"
-                print(clientTS2SocketCreated)
-            except socket.error as socketError:
-            
-                socketOpenError = 'TS2 socket already open, error: {} \n'.format(socketError)
-                print(socketOpenError)
-                exit()
-        
-            # Define the IP address on which you want to connect to the TS1 server
-            TS2IPAddress = socket.gethostbyname(TS2Hostname)
-            print("Hostname on which to connect to TS2 server: " + TS2Hostname + "\n" + "IP address: " + str(TS2IPAddress) + "\n")
-            TS2ServerBinding = (TS2IPAddress, TS2Port)
-        
-            # Connect to the TS2 server
-            clientTS2Socket.connect(TS2ServerBinding)
+            # Establish TS1 and TS2 sockets and servers
+            TS1Server = socketOpen(serverLabelTS1, portTS1)
+            TS1Server.connect(socketBind(serverLabelTS1, hostnameTS1, portTS1))
+            TS2Server = socketOpen(serverLabelTS2, portTS2)
+            TS2Server.connect(socketBind(serverLabelTS2, hostnameTS2, portTS2))
         
             hostnameSentPrompt = "Sending \"" + hostname + "\" to TS1 and TS2 servers...\n"
             print(hostnameSentPrompt)
             
-            queueThread_1 = queue.Queue()
-            queueThread_2 = queue.Queue()
-            queryThread_1 = threading.Thread(name='queryThreadTS1', target = query, args=(clientTS1Socket, hostname, queueThread_1,))
-            queryThread_2 = threading.Thread(name='queryThreadTS2', target = query, args=(clientTS2Socket, hostname, queueThread_2,))
+            queueThreadTS1 = queue.Queue()
+            queueThreadTS2 = queue.Queue()
+            queryThreadTS1 = threading.Thread(name='queryThreadTS1', target = query, args=(TS1Server, hostname, queueThreadTS1,))
+            queryThreadTS2 = threading.Thread(name='queryThreadTS2', target = query, args=(TS2Server, hostname, queueThreadTS2,))
             
-            queryThread_1.start()
-            queryThread_2.start()
-            responseFromTS1Server = None
-            responseFromTS2Server = None
+            queryThreadTS1.start()
+            queryThreadTS2.start()
 
-            while True:
-                
-                try:
-                
-                    responseFromTS1Server = queueThread_1.get_nowait()
-                except queue.Empty:
-                    
-                    pass
-                    
-                try:
-                
-                    responseFromTS2Server = queueThread_2.get_nowait()
-                except queue.Empty:
-                
-                    pass
-                    
-                if responseFromTS1Server is not None and responseFromTS1Server != "timed out":
-                    
-                    print("Popped " + responseFromTS1Server + " from queue 1.\n")
-                    responseTS1Prompt = "Response received from the TS1 server: {}\n".format(responseFromTS1Server)
-                    print(responseTS1Prompt)
-                    clientSocketID.send(responseFromTS1Server.encode('utf-8'))
-                    print("Closing TS1 and TS2 socket connections.\n")
-                    clientTS1Socket.close()
-                    clientTS2Socket.close()
-                    break
-                elif responseFromTS2Server is not None and responseFromTS2Server != "timed out":
-                
-                    print("Popped " + responseFromTS2Server + " from queue 2.\n")
-                    responseTS2Prompt = "Response received from the TS2 server: {}\n".format(responseFromTS2Server)
-                    print(responseTS2Prompt)
-                    clientSocketID.send(responseFromTS2Server.encode('utf-8'))
-                    print("Closing TS1 and TS2 socket connections.\n")
-                    clientTS1Socket.close()
-                    clientTS2Socket.close()
-                    break
-                elif responseFromTS1Server == "timed out" and responseFromTS2Server == "timed out":
-                
-                    noResponse = hostname + " - Error:HOST NOT FOUND"
-                    clientSocketID.send(noResponse.encode('utf-8'))
-                    print("TS1 and TS2 timeout...")
-                    print("Closing TS1 and TS2 socket connections.\n")
-                    clientTS1Socket.close()
-                    clientTS2Socket.close()
-                    break
+            evaluate(serverLabelTS1, serverLabelTS2, clientConnection, hostname, TS1Server, TS2Server, queueThreadTS1, queueThreadTS2)
             
         # Close the client socket connection
-        print("\nClosing client socket connection.\n")
-        clientSocketID.close()
+        print("Closing client socket connection.\n\n")
+        clientConnection.close()
+
+# server function
+def server(label, clientLabel, serverLabelTS1, serverLabelTS2):
     
-    # Close server socket and shutdown server
-    serverSocket.close()
+    # Establish LS server port via command-line argument
+    port = int(sys.argv[1])
+    
+    # Establish TS1 hostname via command-line argument
+    hostnameTS1 = str(sys.argv[2])
+    
+    # Establish TS1 server port via command-line argument
+    portTS1 = int(sys.argv[3])
+    
+    # Establish TS2 hostname via command-line argument
+    hostnameTS2 = str(sys.argv[4])
+    
+    # Establish TS2 server port via command-line argument
+    portTS2 = int(sys.argv[5])
+
+    # Open client socket and listen
+    client = socketOpen(clientLabel, port)
+    client.bind(('', port))
+    client.listen(1)
+    
+    # Print out LS's hostname and its respective IP address
+    serverInfo(label)
+    
+    # Set up simultaneous queries to TS servers for each client query
+    queryMultiThread(client, clientLabel, label, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2)
+    
+    # Close client socket and shutdown server
+    client.close()
     exit()
 
 if __name__ == "__main__":
 
-    thread = threading.Thread(name='server', target = server)
+    # Set label for the server and client
+    label = "LSServer"
+    clientLabel = "LSClient"
+    serverLabelTS1 = "TS1Server"
+    serverLabelTS2 = "TS2Server"
+    
+    thread = threading.Thread(name='server', target = server, args = (label, clientLabel, serverLabelTS1, serverLabelTS2,))
     thread.start()
     
     sleepTime = random.random() * 5
     
-    print("\nLS server thread executed, sleep time: " + str(sleepTime) + " sec\n")
+    print("\n" + label + " thread executed, sleep time: " + str(sleepTime) + " sec\n")
     
     time.sleep(sleepTime)
-

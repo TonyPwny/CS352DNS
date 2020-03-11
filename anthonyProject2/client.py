@@ -7,7 +7,7 @@
 #   https://www.w3schools.com/python/ref_string_split.asp
 #   https://www.geeksforgeeks.org/args-kwargs-python/
 
-import sys, threading, time, socket
+import socket, sys, threading, time
 
 # socketOpen function to open and return a socket in a given port designated by a label.
 def socketOpen(label, port):

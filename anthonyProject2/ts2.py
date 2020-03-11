@@ -42,18 +42,18 @@ def serverInfo(label):
     print(label + " IP address: {}".format(localhostIP))
 
 # evaluate function accepts a given clientSocket connection designated by a given label and receives data to check against a given dictionary
-def evaluate(label, clientSocket, dictionary):
+def evaluate(label, clientLabel, clientSocket, dictionary):
 
     while True:
     
         clientConnection, address = clientSocket.accept()
-        print("Received " + label + " connection request from: {}".format(address))
+        print("Received " + clientLabel + " connection request from: {}".format(address))
     
         # Receive hostname query from the client
         queryFromClient = clientConnection.recv(256)
     
         # The client is done querying
-        if queryFromClient == "shutdownTSServer":
+        if queryFromClient == "shutdown" + label:
         
             print("\nReceived shutdown command...\n")
             clientConnection.close()
@@ -63,7 +63,7 @@ def evaluate(label, clientSocket, dictionary):
         
             clientConnection.send(str(dictionary[queryFromClient]).encode('utf-8'))
             # Close the client socket connection
-            print("\nClosing " + label + " socket connection.\n")
+            print("\nClosing " + clientLabel + " socket connection.\n")
             clientConnection.close()
         # Hostname not in dictionary, do not do anything
 
@@ -83,11 +83,11 @@ def server(label, clientLabel, file):
     client.bind(('', port))
     client.listen(1)
     
-    # Print out TS1's hostname and its respective IP address
+    # Print out TS's hostname and its respective IP address
     serverInfo(label)
     
     # Accept a client socket connection and receives data to check against the DNSTable.
-    evaluate(clientLabel, client, DNSTable)
+    evaluate(label, clientLabel, client, DNSTable)
     
     # Close the client socket and shutdown server
     client.close()
