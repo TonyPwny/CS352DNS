@@ -89,13 +89,27 @@ def shutdown(*files):
     print("Shutting down client.")
     exit()
 
-def client():
+def client(serverLabel, hostnameQueryFile, results):
 
-    # Establish LSServer hostname.
-    LSHostname = str(sys.argv[1])
+    # Establish server hostname.
+    hostname = str(sys.argv[1])
     
-    # Establish LSServer port via command-line argument.
-    LSPort = int(sys.argv[2])
+    # Establish server port via command-line argument.
+    port = int(sys.argv[2])
+    
+    # Read all hostnames in hostnameQueryFile to query the server and write responses in the file results.
+    queryFile(serverLabel, hostname, port, hostnameQueryFile, results)
+
+    # Send shutdown command to server once file is completely queried.
+    shutdownServer(serverLabel, hostname, port)
+    
+    # Close all files and shutdown client.
+    shutdown(hostnameQueryFile, results)
+
+if __name__ == "__main__":
+    
+    # Set label for server client will connect to
+    serverLabel = "LSServer"
     
     # Create file object to read list of hostnames to query.
     hostnameQueryFile = open("PROJ2-HNS.txt", "r")
@@ -103,18 +117,7 @@ def client():
     # Create file object to write all outputs.
     results = open("RESOLVED.txt", "a")
     
-    # Read all hostnames in hostnameQueryFile to query the LSServer and write responses in the file results.
-    queryFile("LSServer", LSHostname, LSPort, hostnameQueryFile, results)
-
-    # Send shutdown command to LSServer once file is completely queried.
-    shutdownServer("LSServer", LSHostname, LSPort)
-    
-    # Close all files and shutdown client.
-    shutdown(hostnameQueryFile, results)
-
-if __name__ == "__main__":
-    
-    thread = threading.Thread(name='client', target = client)
+    thread = threading.Thread(name='client', target = client, args = (serverLabel, hostnameQueryFile, results,))
     thread.start()
     
     sleepTime = 5
