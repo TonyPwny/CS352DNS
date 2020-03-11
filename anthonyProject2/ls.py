@@ -77,13 +77,15 @@ def shutdownServer(label, hostname, port):
     print("Closing " + label + " socket connection.\n")
     server.close()
 
+# resolve function sends a given response to a given clientConnection and closes the current given server connections.
 def resolve(clientConnection, response, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server):
 
     clientConnection.send(response.encode('utf-8'))
     print("Closing " + serverLabelTS1 + " and " + serverLabelTS2 + " socket connections.\n")
     TS1Server.close()
     TS2Server.close()
-    
+
+# evaluate function tries to resolve the results from the given servers and their respective given results queues.
 def evaluate(serverLabelTS1, serverLabelTS2, clientConnection, hostname, TS1Server, TS2Server, queueThreadTS1, queueThreadTS2):
 
     responseFromTS1Server = None
@@ -107,24 +109,25 @@ def evaluate(serverLabelTS1, serverLabelTS2, clientConnection, hostname, TS1Serv
             
         if responseFromTS1Server is not None and responseFromTS1Server != "timed out":
             
-            responseTS1Prompt = "Response received from the " + serverLabelTS1 + ": {}\n".format(responseFromTS1Server)
-            print(responseTS1Prompt)
-            resolve(clientConnection, responseFromTS1Server, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            response = responseFromTS1Server
+            responsePrompt = "Response received from the " + serverLabelTS1 + ": {}\n".format(response)
             break
         elif responseFromTS2Server is not None and responseFromTS2Server != "timed out":
         
-            responseTS2Prompt = "Response received from the " + serverLabelTS2 + ": {}\n".format(responseFromTS2Server)
-            print(responseTS2Prompt)
-            resolve(clientConnection, responseFromTS2Server, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            response = responseFromTS2Server
+            responsePrompt = "Response received from the " + serverLabelTS2 + ": {}\n".format(response)
             break
         elif responseFromTS1Server == "timed out" and responseFromTS2Server == "timed out":
         
-            print(serverLabelTS1 + " and " + serverLabelTS2 + " timeout...")
-            noResponse = hostname + " - Error:HOST NOT FOUND"
-            resolve(clientConnection, noResponse, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
+            response = hostname + " - Error:HOST NOT FOUND"
+            responsePrompt = serverLabelTS1 + " and " + serverLabelTS2 + " timed out; could not resolve hostname..."
             break
+        
+    print(responsePrompt)
+    resolve(clientConnection, response, serverLabelTS1, serverLabelTS2, TS1Server, TS2Server)
 
-def queryMultiThread(client, clientLabel, label, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2):
+# queryMultiThread function takes in the servers label, a client designated by a clientLabel, and the labels, hostnames, and ports for other servers to simulataneously query hostnames from the client to the other servers
+def queryMultiThread(label, clientLabel, client, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2):
 
     while True:
     
@@ -169,7 +172,7 @@ def queryMultiThread(client, clientLabel, label, serverLabelTS1, hostnameTS1, po
         print("Closing client socket connection.\n\n")
         clientConnection.close()
 
-# server function
+# server function takes in a given label for the server, a label for the client connecting to it, and labels for the servers that will be connected to.
 def server(label, clientLabel, serverLabelTS1, serverLabelTS2):
     
     # Establish LS server port via command-line argument
@@ -196,7 +199,7 @@ def server(label, clientLabel, serverLabelTS1, serverLabelTS2):
     serverInfo(label)
     
     # Set up simultaneous queries to TS servers for each client query
-    queryMultiThread(client, clientLabel, label, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2)
+    queryMultiThread(label, clientLabel, client, serverLabelTS1, hostnameTS1, portTS1, serverLabelTS2, hostnameTS2, portTS2)
     
     # Close client socket and shutdown server
     client.close()
@@ -204,7 +207,7 @@ def server(label, clientLabel, serverLabelTS1, serverLabelTS2):
 
 if __name__ == "__main__":
 
-    # Set label for the server and client
+    # Set label for the servers and client
     label = "LSServer"
     clientLabel = "LSClient"
     serverLabelTS1 = "TS1Server"

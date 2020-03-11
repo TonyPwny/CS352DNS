@@ -89,6 +89,7 @@ def shutdown(*files):
     print("Shutting down client.")
     exit()
 
+# client function takes in a given server's label, an input file object with a list of hostnames to query, and an output file object to write results.
 def client(serverLabel, hostnameQueryFile, results):
 
     # Establish server hostname.
